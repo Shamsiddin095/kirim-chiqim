@@ -5,22 +5,22 @@ dotenv.config();
 const client = new MongoClient(process.env.MONGO_URI);
 
 export default async function handler(req, res) {
-  if (req.method !== "PUT")
+  if (req.method !== "PUT") {
     return res.status(405).json({ msg: "Method Not Allowed" });
+  }
 
   const { userId, trxId } = req.query;
   const updateData = req.body;
+
+  if (!userId || !trxId) {
+    return res.status(400).json({ error: "userId yoki trxId yo‘q" });
+  }
 
   try {
     await client.connect();
     const db = client.db("finance");
     const users = db.collection("users");
 
-    // Foydalanuvchini topamiz
-    const user = await users.findOne({ _id: new ObjectId(userId) });
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    // trxId orqali massiv ichidagi elementni yangilaymiz
     const result = await users.updateOne(
       { _id: new ObjectId(userId), "transactions.trxId": trxId },
       {

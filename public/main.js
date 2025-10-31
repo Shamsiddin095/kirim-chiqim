@@ -119,8 +119,9 @@ async function loadTransactions() {
           <span class="trx-category">${trx.category} – ${trx.description || ""}</span>
         </div>
         <div class="trx-actions">
-          <button class="editBtn" data-id="${trx._id}">✏️</button>
+         <button class="editBtn" data-id="${trx.trxId}">✏️</button>
           <button class="delBtn" data-id="${trx.trxId}">🗑️</button>
+
 
 
 

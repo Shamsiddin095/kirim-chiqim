@@ -5,23 +5,24 @@ dotenv.config();
 const client = new MongoClient(process.env.MONGO_URI);
 
 export default async function handler(req, res) {
-  if (req.method !== "DELETE")
+  if (req.method !== "DELETE") {
     return res.status(405).json({ msg: "Method not allowed" });
+  }
+
+  const { userId, trxId } = req.query;
+
+  if (!userId || !trxId) {
+    return res.status(400).json({ msg: "userId yoki trxId yo‘q" });
+  }
 
   try {
     await client.connect();
     const db = client.db("finance");
     const users = db.collection("users");
-    const { userId, trxId } = req.query;
 
-    if (!userId || !trxId) {
-      return res.status(400).json({ msg: "userId yoki trxId yo‘q" });
-    }
-
-    // trxId bilan o‘chirish
     const result = await users.updateOne(
       { _id: new ObjectId(userId) },
-      { $pull: { transactions: { trxId: trxId } } } // ObjectId emas, string shaklida
+      { $pull: { transactions: { trxId } } }
     );
 
     if (result.modifiedCount === 0) {
