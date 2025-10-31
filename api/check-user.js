@@ -1,22 +1,22 @@
-import { MongoClient } from "mongodb";
+import { MongoClient, ObjectId } from "mongodb";
 import dotenv from "dotenv";
 dotenv.config();
 
 const client = new MongoClient(process.env.MONGO_URI);
 
 export default async function handler(req, res) {
-  if (req.method !== "POST")
+  if (req.method !== "GET")
     return res.status(405).json({ msg: "Method not allowed" });
 
   try {
     await client.connect();
     const db = client.db("app");
-    const { username, password } = req.body;
+    const { userId } = req.query;
 
-    const user = await db.collection("users").findOne({ username, password });
-    if (!user) return res.status(400).json({ msg: "Invalid credentials" });
+    const user = await db.collection("users").findOne({ _id: new ObjectId(userId) });
+    if (!user) return res.status(400).json({ msg: "User not found" });
 
-    res.json({ msg: "Login success", userId: user._id, username: user.username });
+    res.json({ username: user.username });
   } catch (err) {
     res.status(500).json({ msg: err.message });
   }

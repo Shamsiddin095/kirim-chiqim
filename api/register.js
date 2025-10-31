@@ -5,15 +5,16 @@ dotenv.config();
 const client = new MongoClient(process.env.MONGO_URI);
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ msg: "Method not allowed" });
-
-  const { username, tel, password } = req.body;
-  if (!username || !tel || !password)
-    return res.status(400).json({ msg: "All fields required" });
+  if (req.method !== "POST")
+    return res.status(405).json({ msg: "Method not allowed" });
 
   try {
     await client.connect();
     const db = client.db("app");
+    const { username, tel, password } = req.body;
+
+    if (!username || !tel || !password)
+      return res.status(400).json({ msg: "All fields required" });
 
     const existing = await db.collection("users").findOne({ username });
     if (existing) return res.status(400).json({ msg: "Username exists" });
