@@ -120,7 +120,8 @@ async function loadTransactions() {
         </div>
         <div class="trx-actions">
           <button class="editBtn" data-id="${trx._id}">✏️</button>
-          <button class="delBtn" data-id="${trx._id}">🗑️</button>
+          <button class="delBtn" data-id="${trx._id || trx.id}">🗑️</button>
+
         </div>
       `;
       trxList.appendChild(li);
@@ -137,12 +138,16 @@ async function loadTransactions() {
       });
 
       // === Delete ===
-      li.querySelector(".delBtn").addEventListener("click", async () => {
-        if (confirm("Haqiqatan ham o‘chirmoqchimisiz?")) {
-          await fetch(`/api/trx-delete?userId=${userId}&trxId=${trx._id}`, { method: "DELETE" });
-          await loadTransactions();
-        }
-      });
+      li.querySelector(".delBtn").addEventListener("click", async (e) => {
+  const trxId = e.target.getAttribute("data-id");
+  if (!trxId) return alert("Tranzaksiya ID topilmadi!");
+
+  if (confirm("Haqiqatan ham o‘chirmoqchimisiz?")) {
+    await fetch(`/api/trx-delete?userId=${userId}&trxId=${trxId}`, { method: "DELETE" });
+    await loadTransactions();
+  }
+});
+
     });
 
     // === Progress barlar ===

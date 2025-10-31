@@ -1,33 +1,41 @@
+// === /api/trx-update ===
 import { MongoClient, ObjectId } from "mongodb";
-import dotenv from "dotenv";
-dotenv.config();
-
 const client = new MongoClient(process.env.MONGO_URI);
 
 export default async function handler(req, res) {
-  if (req.method !== "PUT")
-    return res.status(405).json({ msg: "Method not allowed" });
+  if (req.method !== "PUT") return res.status(405).send("Method Not Allowed");
+
+  const { userId, trxId } = req.query;
+  const updateData = req.body;
 
   try {
     await client.connect();
-    const db = client.db("app");
-    const { userId, trxId } = req.query;
-    const { type, amount, category, description } = req.body;
+    const db = client.db("finance");
+    const users = db.collection("users");
 
-    await db.collection("transactions").updateOne(
-      { _id: new ObjectId(userId), "transactions.trxId": new ObjectId(trxId) },
+    // foydalanuvchini topamiz
+    const user = await users.findOne({ _id: new ObjectId(userId) });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    // massiv ichidagi bitta tranzaksiyani yangilaymiz
+    await users.updateOne(
+      { _id: new ObjectId(userId), "transactions._id": new ObjectId(trxId) },
       {
         $set: {
-          "transactions.$.type": type,
-          "transactions.$.amount": Number(amount),
-          "transactions.$.category": category,
-          "transactions.$.description": description || ""
+          "transactions.$.amount": Number(updateData.amount),
+          "transactions.$.category": updateData.category,
+          "transactions.$.description": updateData.description,
+          "transactions.$.type": updateData.type,
+          "transactions.$.date": new Date()
         }
       }
     );
 
-    res.json({ msg: "Transaction updated" });
+    res.status(200).json({ message: "Transaction updated" });
   } catch (err) {
-    res.status(500).json({ msg: err.message });
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  } finally {
+    await client.close();
   }
 }
