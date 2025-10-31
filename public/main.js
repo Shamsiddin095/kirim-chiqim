@@ -17,7 +17,8 @@ let editingTrxId = null; // tahrirlash uchun global o‘zgaruvchi
 
 // === Foydalanuvchini tekshirish ===
 async function checkUser() {
-  const res = await fetch(`/api/check-user/${userId}`);
+const res = await fetch(`/api/check-user?userId=${userId}`);
+
   const result = await res.json();
   if (!res.ok) window.location.href = "login.html";
   else usernameEl.innerText = result.username;
@@ -54,19 +55,21 @@ trxForm.addEventListener("submit", async e => {
 
   if (editingTrxId) {
     // Tahrirlash rejimi
-    await fetch(`/api/trx/${editingTrxId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
-    });
+    await fetch(`/api/trx-update?userId=${userId}&trxId=${editingTrxId}`, {
+  method: "PUT",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(data)
+});
+
     editingTrxId = null; // reset
   } else {
     // Yangi qo‘shish rejimi
-    await fetch("/api/trx", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
-    });
+   await fetch("/api/trx-add", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(data)
+});
+
   }
 
   trxForm.reset();
@@ -77,7 +80,8 @@ trxForm.addEventListener("submit", async e => {
 // === Tranzaksiyalarni yuklash ===
 async function loadTransactions() {
   const period = filterPeriod.value;
-  const res = await fetch(`/api/trx/${userId}${period ? `?period=${period}` : ""}`);
+  const res = await fetch(`/api/trx-get?userId=${userId}${period ? `&period=${period}` : ""}`);
+
   const data = await res.json();
 
   const trxs = data.transactions;
@@ -125,7 +129,8 @@ async function loadTransactions() {
     // === Delete ===
     li.querySelector(".delBtn").addEventListener("click", async () => {
       if (confirm("Haqiqatan ham o‘chirmoqchimisiz?")) {
-        await fetch(`api/trx/${trx._id}`, { method: "DELETE" });
+     await fetch(`/api/trx-delete?userId=${userId}&trxId=${trx._id}`, { method: "DELETE" });
+
         loadTransactions();
       }
     });
