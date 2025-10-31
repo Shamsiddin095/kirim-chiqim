@@ -17,8 +17,8 @@ export default async function handler(req, res) {
 
   try {
     await client.connect();
-    const db = client.db("finance");
-    const users = db.collection("users");
+    const db = client.db("app");
+    const users = db.collection("transactions");
 
     const result = await users.updateOne(
       { _id: new ObjectId(userId) },
