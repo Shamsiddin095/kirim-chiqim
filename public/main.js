@@ -17,7 +17,7 @@ let editingTrxId = null; // tahrirlash uchun global o‘zgaruvchi
 
 // === Foydalanuvchini tekshirish ===
 async function checkUser() {
-  const res = await fetch(`http://localhost:5000/check-user/${userId}`);
+  const res = await fetch(`api/check-user/${userId}`);
   const result = await res.json();
   if (!res.ok) window.location.href = "login.html";
   else usernameEl.innerText = result.username;
@@ -54,7 +54,7 @@ trxForm.addEventListener("submit", async e => {
 
   if (editingTrxId) {
     // Tahrirlash rejimi
-    await fetch(`http://localhost:5000/trx/${editingTrxId}`, {
+    await fetch(`api/trx/${editingTrxId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data)
@@ -62,7 +62,7 @@ trxForm.addEventListener("submit", async e => {
     editingTrxId = null; // reset
   } else {
     // Yangi qo‘shish rejimi
-    await fetch("http://localhost:5000/trx", {
+    await fetch("api/trx", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data)
@@ -77,7 +77,7 @@ trxForm.addEventListener("submit", async e => {
 // === Tranzaksiyalarni yuklash ===
 async function loadTransactions() {
   const period = filterPeriod.value;
-  const res = await fetch(`http://localhost:5000/trx/${userId}${period ? `?period=${period}` : ""}`);
+  const res = await fetch(`api/trx/${userId}${period ? `?period=${period}` : ""}`);
   const data = await res.json();
 
   const trxs = data.transactions;
@@ -125,7 +125,7 @@ async function loadTransactions() {
     // === Delete ===
     li.querySelector(".delBtn").addEventListener("click", async () => {
       if (confirm("Haqiqatan ham o‘chirmoqchimisiz?")) {
-        await fetch(`http://localhost:5000/trx/${trx._id}`, { method: "DELETE" });
+        await fetch(`api/trx/${trx._id}`, { method: "DELETE" });
         loadTransactions();
       }
     });

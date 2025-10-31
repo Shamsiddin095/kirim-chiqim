@@ -6,30 +6,43 @@ import path from "path";
 
 dotenv.config();
 const app = express();
-const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(path.resolve(), "public")));
 
 let db;
-MongoClient.connect(process.env.MONGO_URI, { useUnifiedTopology: true })
-  .then(client => {
+
+// Mongo ulanish
+const client = new MongoClient(process.env.MONGO_URI, { useUnifiedTopology: true });
+async function connectDB() {
+  if (!db) {
+    await client.connect();
     db = client.db("app");
-    console.log("MongoDB connected");
-  })
-  .catch(err => console.error(err));
+    console.log("✅ MongoDB connected");
+  }
+}
+connectDB();
+
+// === ROUTES ===
 
 // Register
 app.post("/register", async (req, res) => {
   try {
     const { username, tel, password } = req.body;
-    if (!username || !tel || !password) return res.status(400).json({ msg: "All fields required" });
+    if (!username || !tel || !password)
+      return res.status(400).json({ msg: "All fields required" });
 
     const existingUser = await db.collection("users").findOne({ username });
     if (existingUser) return res.status(400).json({ msg: "Username exists" });
 
-    const result = await db.collection("users").insertOne({ username, tel, password, createdAt: new Date() });
+    const result = await db.collection("users").insertOne({
+      username,
+      tel,
+      password,
+      createdAt: new Date()
+    });
+
     res.json({ msg: "User registered", userId: result.insertedId });
   } catch (err) {
     res.status(500).json({ msg: err.message });
@@ -48,19 +61,47 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// Check-user
+// Check user
 app.get("/check-user/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
     const user = await db.collection("users").findOne({ _id: new ObjectId(userId) });
     if (!user) return res.status(400).json({ msg: "User not found" });
-    res.json({ msg: "User exists", username: user.username });
+    res.json({ username: user.username });
   } catch (err) {
     res.status(500).json({ msg: err.message });
   }
 });
 
-// Update transaction by ID
+// Add transaction
+app.post("/trx", async (req, res) => {
+  try {
+    const { userId, type, amount, category, description } = req.body;
+    if (!userId || !type || !amount || !category)
+      return res.status(400).json({ msg: "Missing fields" });
+
+    const newTrx = {
+      trxId: new ObjectId(),
+      type,
+      amount: Number(amount),
+      category,
+      description: description || "",
+      date: new Date()
+    };
+
+    await db.collection("transactions").updateOne(
+      { _id: new ObjectId(userId) },
+      { $push: { transactions: newTrx } },
+      { upsert: true }
+    );
+
+    res.json({ msg: "Transaction added" });
+  } catch (err) {
+    res.status(500).json({ msg: err.message });
+  }
+});
+
+// Update transaction
 app.put("/trx/:userId/:trxId", async (req, res) => {
   try {
     const { userId, trxId } = req.params;
@@ -84,7 +125,7 @@ app.put("/trx/:userId/:trxId", async (req, res) => {
   }
 });
 
-// Delete transaction by ID
+// Delete transaction
 app.delete("/trx/:userId/:trxId", async (req, res) => {
   try {
     const { userId, trxId } = req.params;
@@ -100,38 +141,7 @@ app.delete("/trx/:userId/:trxId", async (req, res) => {
   }
 });
 
-// Transactions
-// Transaction qo‘shish
-app.post("/trx", async (req, res) => {
-  try {
-    const { userId, type, amount, category, description } = req.body;
-    if (!userId || !type || !amount || !category)
-      return res.status(400).json({ msg: "Missing fields" });
-
-    const newTrx = {
-      trxId: new ObjectId(),
-      type,
-      amount: Number(amount),
-      category,
-      description: description || "",
-      date: new Date()
-    };
-
-    // Foydalanuvchining transaction hujjatini topamiz yoki yaratamiz
-    await db.collection("transactions").updateOne(
-      { _id: new ObjectId(userId) },
-      { $push: { transactions: newTrx } },
-      { upsert: true }
-    );
-
-    res.json({ msg: "Transaction added" });
-  } catch (err) {
-    res.status(500).json({ msg: err.message });
-  }
-});
-
-
-// Get transactions (optionally filter by period)
+// Get transactions
 app.get("/trx/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
@@ -139,11 +149,11 @@ app.get("/trx/:userId", async (req, res) => {
     const now = new Date();
 
     const userTrx = await db.collection("transactions").findOne({ _id: new ObjectId(userId) });
-    if (!userTrx || !userTrx.transactions) return res.json({ transactions: [], totals: {} });
+    if (!userTrx || !userTrx.transactions)
+      return res.json({ transactions: [], totals: {} });
 
     let transactions = userTrx.transactions;
 
-    // Filtrlash
     if (period === "day") {
       const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       transactions = transactions.filter(t => new Date(t.date) >= start);
@@ -157,7 +167,6 @@ app.get("/trx/:userId", async (req, res) => {
       transactions = transactions.filter(t => new Date(t.date) >= start);
     }
 
-    // Hisoblash
     const totals = { income: 0, expense: 0, categories: {} };
     transactions.forEach(t => {
       if (t.type === "income") totals.income += t.amount;
@@ -171,5 +180,5 @@ app.get("/trx/:userId", async (req, res) => {
   }
 });
 
-
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// === MUHIM QISM (Vercel uchun eksport) ===
+export default app;
