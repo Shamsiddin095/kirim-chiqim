@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <link rel="stylesheet" href="./styles/login.css">
+</head>
+<body>
+  <h2>Login</h2>
+  <form id="loginForm">
+    <input type="text" placeholder="Username" name="username" required>
+    <input type="password" placeholder="Password" name="password" required>
+    <button type="submit">Login</button>
+  </form>
+  <p>Yangi foydalanuvchi? <a href="register.html">Register</a></p>
+
+  <script>
+    const form = document.getElementById("loginForm");
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(form));
+      const res = await fetch("http://localhost:5000/login", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(data)
+});
+
+      const result = await res.json();
+      if(res.ok) window.location.href = "index.html?userId=" + result.userId;
+      else alert(result.msg);
+    });
+  </script>
+</body>
+</html>

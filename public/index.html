@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oilaviy Budjet</title>
+  <link rel="stylesheet" href="./styles/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside id="sidebar">
+    <h3 id="username">Foydalanuvchi</h3>
+    <button id="btnAddIncome">➕ Kirim</button>
+    <button id="btnAddExpense">➖ Chi­qim</button>
+    <select id="filterPeriod">
+      <option value="">Barchasi</option>
+      <option value="day">Kunlik</option>
+      <option value="week">Haftalik</option>
+      <option value="month">Oylik</option>
+    </select>
+
+    <div id="progressBars">
+      <div class="progressBar incomeBar"><span class="progressLabel"></span></div>
+      <div class="progressBar expenseBar"><span class="progressLabel"></span></div>
+    </div>
+
+    <button id="btnLogout" class="logout">🚪 Chiqish</button>
+  </aside>
+
+  <!-- Asosiy qism -->
+  <main id="main">
+    <header>
+      <h2>💰 Tranzaksiyalar</h2>
+    </header>
+
+    <ul id="trxList"></ul>
+
+    <section id="trxFormContainer" style="display:none">
+      <h3 id="formTitle"></h3>
+      <form id="trxForm">
+        <input type="number" name="amount" placeholder="Miqdor" required>
+        <select name="category" required>
+          <option value="">Kategoriya</option>
+          <option value="Svet">Svet</option>
+          <option value="Jamg‘arma">Jamg‘arma</option>
+          <option value="Ovqat">Ovqat</option>
+        </select>
+        <input type="text" name="description" placeholder="Tavsif (ixtiyoriy)">
+        <button type="submit">💾 Saqlash</button>
+      </form>
+    </section>
+
+    <!-- Diagrammalar -->
+    <div class="charts">
+      <div class="chart-box">
+        <h3>📈 Kirimlar</h3>
+        <canvas id="trxChartIncome"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>📉 Chi­qimlar</h3>
+        <canvas id="trxChartExpense"></canvas>
+      </div>
+    </div>
+  </main>
+
+  <script src="main.js"></script>
+</body>
+</html>

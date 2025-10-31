@@ -1,0 +1,234 @@
+/* === Umumiy === */
+* {
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+  display: flex;
+  margin: 0;
+  height: 100vh;
+  background-color: #f4f6f8;
+  color: #333;
+}
+
+/* === Sidebar === */
+#sidebar {
+  width: 240px;
+  background: linear-gradient(180deg, #263238, #37474f);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  gap: 10px;
+  border-right: 1px solid rgba(255,255,255,0.1);
+}
+
+#sidebar h3 {
+  font-size: 20px;
+  text-align: center;
+  margin-bottom: 15px;
+  font-weight: 600;
+  color: #fff;
+}
+
+#sidebar button, #sidebar select {
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+#sidebar button {
+  background-color: #455a64;
+  color: #fff;
+}
+#sidebar button:hover {
+  background-color: #607d8b;
+  transform: scale(1.05);
+}
+
+#sidebar select {
+  background-color: #fff;
+  color: #000;
+  border: none;
+}
+
+.logout {
+  margin-top: auto;
+  background-color: #c62828;
+}
+.logout:hover {
+  background-color: #e53935;
+}
+
+/* === Progress barlar === */
+#progressBars {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.progressBar {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 15px;
+  height: 22px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progressBar span.progressLabel {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  line-height: 22px;
+  font-size: 12px;
+  color: #fff;
+  font-weight: 600;
+}
+
+.incomeBar {
+  background-color: #2e7d32;
+}
+.expenseBar {
+  background-color: #c62828;
+}
+
+/* === Main === */
+#main {
+  flex: 1;
+  padding: 25px;
+  overflow-y: auto;
+}
+
+header h2 {
+  margin: 0 0 15px 0;
+  font-size: 24px;
+  color: #263238;
+}
+
+/* === Tranzaksiya ro‘yxati === */
+#trxList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#trxList li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  transition: 0.2s;
+}
+
+#trxList li:hover {
+  transform: scale(1.01);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+#trxList li.income { border-left: 5px solid #4caf50; }
+#trxList li.expense { border-left: 5px solid #f44336; }
+
+.trx-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+}
+
+.trx-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.trx-actions button {
+  border: none;
+  background-color: #eceff1;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 5px 8px;
+  font-size: 16px;
+  transition: 0.3s;
+}
+.trx-actions button:hover {
+  background-color: #cfd8dc;
+}
+
+/* === Form === */
+#trxFormContainer {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 20px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 400px;
+}
+
+#trxForm input, #trxForm select, #trxForm button {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+#trxForm button {
+  background-color: #009688;
+  color: white;
+  font-weight: 600;
+  border: none;
+}
+#trxForm button:hover {
+  background-color: #00796b;
+}
+
+/* === Diagrammalar === */
+.charts {
+  margin-top: 30px;
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 30px;
+}
+
+.chart-box {
+  background-color: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  width: 350px;
+  height: 350px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+  text-align: center;
+  transition: 0.3s;
+}
+.chart-box:hover {
+  transform: scale(1.03);
+}
+
+.chart-box h3 {
+  margin-bottom: 10px;
+  color: #263238;
+  font-weight: 600;
+}
+
+canvas {
+  width: 100% !important;
+  height: 270px !important;
+}
+
+/* === Mobil uchun === */
+@media (max-width: 768px) {
+  body { flex-direction: column; }
+  #sidebar { width: 100%; flex-direction: row; flex-wrap: wrap; justify-content: space-around; }
+  .charts { flex-direction: column; align-items: center; }
+}

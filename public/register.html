@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ro'yhatdan o'tish</title>
+  <link rel="stylesheet" href="./styles/register.css">
+</head>
+<body>
+  <h2>Ro'yhatdan o'tish</h2>
+  <form id="registerForm">
+    <input type="text" placeholder="Username" name="username" required>
+    <input type="tel" placeholder="Tel" name="tel" required>
+    <input type="password" placeholder="Password" name="password" required>
+    <button type="submit">Register</button>
+  </form>
+  <p>Allaqachon ro'yhatdan o'tganmisiz? <a href="login.html">Login</a></p>
+
+  <script>
+    const form = document.getElementById("registerForm");
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(form));
+      const res = await fetch("http://localhost:5000/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      const result = await res.json();
+      if(res.ok) window.location.href = "index.html?userId=" + result.userId;
+      else alert(result.msg);
+    });
+  </script>
+</body>
+</html>
