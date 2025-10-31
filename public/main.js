@@ -120,7 +120,8 @@ async function loadTransactions() {
         </div>
         <div class="trx-actions">
           <button class="editBtn" data-id="${trx._id}">✏️</button>
-          <button class="delBtn" data-id="${trx._id || trx.id}">🗑️</button>
+          <button class="delBtn" data-id="${trx._id}">🗑️</button>
+
 
         </div>
       `;

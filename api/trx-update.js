@@ -1,5 +1,7 @@
-// === /api/trx-update ===
 import { MongoClient, ObjectId } from "mongodb";
+import dotenv from "dotenv";
+dotenv.config();
+
 const client = new MongoClient(process.env.MONGO_URI);
 
 export default async function handler(req, res) {
@@ -13,11 +15,10 @@ export default async function handler(req, res) {
     const db = client.db("finance");
     const users = db.collection("users");
 
-    // foydalanuvchini topamiz
     const user = await users.findOne({ _id: new ObjectId(userId) });
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    // massiv ichidagi bitta tranzaksiyani yangilaymiz
+    // Tranzaksiyani massiv ichida yangilash
     await users.updateOne(
       { _id: new ObjectId(userId), "transactions._id": new ObjectId(trxId) },
       {
@@ -33,7 +34,7 @@ export default async function handler(req, res) {
 
     res.status(200).json({ message: "Transaction updated" });
   } catch (err) {
-    console.error(err);
+    console.error("Update xato:", err);
     res.status(500).json({ error: "Server error" });
   } finally {
     await client.close();

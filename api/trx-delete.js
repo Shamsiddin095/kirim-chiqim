@@ -10,16 +10,25 @@ export default async function handler(req, res) {
 
   try {
     await client.connect();
-    const db = client.db("app");
+    const db = client.db("finance"); // bu yer "app" emas, "finance" bo‘lishi kerak
+    const users = db.collection("users");
     const { userId, trxId } = req.query;
 
-    await db.collection("transactions").updateOne(
+    if (!userId || !trxId) {
+      return res.status(400).json({ msg: "userId yoki trxId yo‘q" });
+    }
+
+    // Foydalanuvchi ichidagi transactions massivdan bitta obyektni o‘chirish
+    await users.updateOne(
       { _id: new ObjectId(userId) },
-      { $pull: { transactions: { trxId: new ObjectId(trxId) } } }
+      { $pull: { transactions: { _id: new ObjectId(trxId) } } } // e’tibor bering: _id
     );
 
     res.json({ msg: "Transaction deleted" });
   } catch (err) {
+    console.error("Delete xato:", err);
     res.status(500).json({ msg: err.message });
+  } finally {
+    await client.close();
   }
 }
