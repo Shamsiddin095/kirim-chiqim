@@ -8,40 +8,33 @@ export default async function handler(req, res) {
   if (req.method !== "GET")
     return res.status(405).json({ msg: "Method not allowed" });
 
+  const { userId } = req.query;
+  if (!userId) return res.status(400).json({ msg: "userId kerak" });
+
   try {
     await client.connect();
     const db = client.db("app");
-    const { userId, period } = req.query;
-    const now = new Date();
+    const transactions = await db
+      .collection("transactions")
+      .find({ userId: new ObjectId(userId) })
+      .sort({ date: -1 })
+      .toArray();
 
-    const userTrx = await db.collection("transactions").findOne({ _id: new ObjectId(userId) });
-    if (!userTrx || !userTrx.transactions)
-      return res.json({ transactions: [], totals: {} });
+    // umumiy summa
+    const totals = {
+      income: transactions
+        .filter(t => t.type === "income")
+        .reduce((sum, t) => sum + t.amount, 0),
+      expense: transactions
+        .filter(t => t.type === "expense")
+        .reduce((sum, t) => sum + t.amount, 0)
+    };
 
-    let transactions = userTrx.transactions;
-
-    if (period === "day") {
-      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      transactions = transactions.filter(t => new Date(t.date) >= start);
-    } else if (period === "week") {
-      const start = new Date();
-      start.setDate(now.getDate() - now.getDay());
-      start.setHours(0, 0, 0, 0);
-      transactions = transactions.filter(t => new Date(t.date) >= start);
-    } else if (period === "month") {
-      const start = new Date(now.getFullYear(), now.getMonth(), 1);
-      transactions = transactions.filter(t => new Date(t.date) >= start);
-    }
-
-    const totals = { income: 0, expense: 0, categories: {} };
-    transactions.forEach(t => {
-      if (t.type === "income") totals.income += t.amount;
-      else totals.expense += t.amount;
-      totals.categories[t.category] = (totals.categories[t.category] || 0) + t.amount;
-    });
-
-    res.json({ transactions, totals });
+    res.status(200).json({ transactions, totals });
   } catch (err) {
+    console.error("Get transactions error:", err);
     res.status(500).json({ msg: err.message });
+  } finally {
+    await client.close();
   }
 }

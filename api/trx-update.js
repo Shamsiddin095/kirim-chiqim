@@ -5,43 +5,38 @@ dotenv.config();
 const client = new MongoClient(process.env.MONGO_URI);
 
 export default async function handler(req, res) {
-  if (req.method !== "PUT") {
-    return res.status(405).json({ msg: "Method Not Allowed" });
-  }
+  if (req.method !== "PUT")
+    return res.status(405).json({ msg: "Method not allowed" });
 
   const { userId, trxId } = req.query;
   const updateData = req.body;
 
-  if (!userId || !trxId) {
-    return res.status(400).json({ error: "userId yoki trxId yo‘q" });
-  }
+  if (!userId || !trxId)
+    return res.status(400).json({ msg: "userId yoki trxId kerak" });
 
   try {
     await client.connect();
     const db = client.db("app");
-    const users = db.collection("transactions");
-
-    const result = await users.updateOne(
-      { _id: new ObjectId(userId), "transactions.trxId": trxId },
+    const result = await db.collection("transactions").updateOne(
+      { userId: new ObjectId(userId), trxId: new ObjectId(trxId) },
       {
         $set: {
-          "transactions.$.amount": Number(updateData.amount),
-          "transactions.$.category": updateData.category,
-          "transactions.$.description": updateData.description,
-          "transactions.$.type": updateData.type,
-          "transactions.$.date": new Date()
+          type: updateData.type,
+          amount: Number(updateData.amount),
+          category: updateData.category,
+          description: updateData.description || "",
+          date: new Date()
         }
       }
     );
 
-    if (result.modifiedCount === 0) {
-      return res.status(404).json({ error: "Transaction not found" });
-    }
+    if (result.matchedCount === 0)
+      return res.status(404).json({ msg: "Transaction not found" });
 
-    res.status(200).json({ message: "Transaction updated" });
+    res.status(200).json({ msg: "Transaction updated" });
   } catch (err) {
-    console.error("Update xato:", err);
-    res.status(500).json({ error: "Server error" });
+    console.error("Update transaction error:", err);
+    res.status(500).json({ msg: err.message });
   } finally {
     await client.close();
   }

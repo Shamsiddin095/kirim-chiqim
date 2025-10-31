@@ -17,6 +17,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ msg: "Missing fields" });
 
     const newTrx = {
+      userId: new ObjectId(userId),
       trxId: new ObjectId(),
       type,
       amount: Number(amount),
@@ -25,14 +26,13 @@ export default async function handler(req, res) {
       date: new Date()
     };
 
-    await db.collection("transactions").updateOne(
-      { _id: new ObjectId(userId) },
-      { $push: { transactions: newTrx } },
-      { upsert: true }
-    );
+    await db.collection("transactions").insertOne(newTrx);
 
-    res.json({ msg: "Transaction added" });
+    res.status(200).json({ msg: "Transaction added successfully" });
   } catch (err) {
+    console.error("Add transaction error:", err);
     res.status(500).json({ msg: err.message });
+  } finally {
+    await client.close();
   }
 }
