@@ -120,7 +120,8 @@ async function loadTransactions() {
         </div>
         <div class="trx-actions">
           <button class="editBtn" data-id="${trx._id}">✏️</button>
-          <button class="delBtn" data-id="${trx._id}">🗑️</button>
+          <button class="delBtn" data-id="${trx.trxId}">🗑️</button>
+
 
 
         </div>
@@ -130,7 +131,7 @@ async function loadTransactions() {
       // === Edit ===
       li.querySelector(".editBtn").addEventListener("click", () => {
         trxType = trx.type;
-        editingTrxId = trx._id;
+        editingTrxId = trx.trxId;
         formTitle.innerText = "Tranzaksiyani tahrirlash";
         formContainer.style.display = "block";
         trxForm.amount.value = trx.amount;

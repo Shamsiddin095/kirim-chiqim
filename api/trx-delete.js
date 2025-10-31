@@ -10,7 +10,7 @@ export default async function handler(req, res) {
 
   try {
     await client.connect();
-    const db = client.db("finance"); // bu yer "app" emas, "finance" bo‘lishi kerak
+    const db = client.db("finance");
     const users = db.collection("users");
     const { userId, trxId } = req.query;
 
@@ -18,11 +18,15 @@ export default async function handler(req, res) {
       return res.status(400).json({ msg: "userId yoki trxId yo‘q" });
     }
 
-    // Foydalanuvchi ichidagi transactions massivdan bitta obyektni o‘chirish
-    await users.updateOne(
+    // trxId bilan o‘chirish
+    const result = await users.updateOne(
       { _id: new ObjectId(userId) },
-      { $pull: { transactions: { _id: new ObjectId(trxId) } } } // e’tibor bering: _id
+      { $pull: { transactions: { trxId: trxId } } } // ObjectId emas, string shaklida
     );
+
+    if (result.modifiedCount === 0) {
+      return res.status(404).json({ msg: "Tranzaksiya topilmadi" });
+    }
 
     res.json({ msg: "Transaction deleted" });
   } catch (err) {

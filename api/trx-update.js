@@ -5,7 +5,8 @@ dotenv.config();
 const client = new MongoClient(process.env.MONGO_URI);
 
 export default async function handler(req, res) {
-  if (req.method !== "PUT") return res.status(405).send("Method Not Allowed");
+  if (req.method !== "PUT")
+    return res.status(405).json({ msg: "Method Not Allowed" });
 
   const { userId, trxId } = req.query;
   const updateData = req.body;
@@ -15,12 +16,13 @@ export default async function handler(req, res) {
     const db = client.db("finance");
     const users = db.collection("users");
 
+    // Foydalanuvchini topamiz
     const user = await users.findOne({ _id: new ObjectId(userId) });
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    // Tranzaksiyani massiv ichida yangilash
-    await users.updateOne(
-      { _id: new ObjectId(userId), "transactions._id": new ObjectId(trxId) },
+    // trxId orqali massiv ichidagi elementni yangilaymiz
+    const result = await users.updateOne(
+      { _id: new ObjectId(userId), "transactions.trxId": trxId },
       {
         $set: {
           "transactions.$.amount": Number(updateData.amount),
@@ -31,6 +33,10 @@ export default async function handler(req, res) {
         }
       }
     );
+
+    if (result.modifiedCount === 0) {
+      return res.status(404).json({ error: "Transaction not found" });
+    }
 
     res.status(200).json({ message: "Transaction updated" });
   } catch (err) {
