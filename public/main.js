@@ -15,7 +15,7 @@ const incomeBar = document.querySelector(".incomeBar");
 const expenseBar = document.querySelector(".expenseBar");
 
 let trxType = "";
-let trxChartIncome, trxChartExpense;
+
 let editingTrxId = null;
 
 async function checkUser() {
