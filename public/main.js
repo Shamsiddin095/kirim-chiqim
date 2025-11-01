@@ -1,10 +1,10 @@
 import { saveTransactionOffline } from "./db.js";
 import { syncWithServer } from "./sync.js";
 
-const urlParams = new URLSearchParams(window.location.search);
-const userId = urlParams.get("userId");
-if (!userId) window.location.href = "login.html";
-
+// const urlParams = new URLSearchParams(window.location.search);
+// const userId = urlParams.get("userId");
+// if (!userId) window.location.href = "login.html";
+const userId = "demoUser";
 const usernameEl = document.getElementById("username");
 const trxList = document.getElementById("trxList");
 const formContainer = document.getElementById("trxFormContainer");
