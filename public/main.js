@@ -1,8 +1,10 @@
+import { saveTransactionOffline } from "./db.js";
+import { syncWithServer } from "./sync.js";
+
 const urlParams = new URLSearchParams(window.location.search);
 const userId = urlParams.get("userId");
 if (!userId) window.location.href = "login.html";
 
-// === DOM elementlar ===
 const usernameEl = document.getElementById("username");
 const trxList = document.getElementById("trxList");
 const formContainer = document.getElementById("trxFormContainer");
@@ -16,7 +18,6 @@ let trxType = "";
 let trxChartIncome, trxChartExpense;
 let editingTrxId = null;
 
-// === Foydalanuvchini tekshirish ===
 async function checkUser() {
   try {
     const res = await fetch(`/api/check-user?userId=${userId}`);
@@ -30,13 +31,11 @@ async function checkUser() {
 }
 checkUser();
 
-// === Logout ===
 document.getElementById("btnLogout").addEventListener("click", () => {
   localStorage.clear();
   window.location.href = "login.html";
 });
 
-// === Formni ochish ===
 document.getElementById("btnAddIncome").addEventListener("click", () => {
   trxType = "income";
   editingTrxId = null;
@@ -53,7 +52,6 @@ document.getElementById("btnAddExpense").addEventListener("click", () => {
   formContainer.style.display = "block";
 });
 
-// === Tranzaksiya yuborish ===
 trxForm.addEventListener("submit", async e => {
   e.preventDefault();
   const data = Object.fromEntries(new FormData(trxForm));
@@ -61,21 +59,29 @@ trxForm.addEventListener("submit", async e => {
   data.userId = userId;
 
   try {
-    if (editingTrxId) {
-      // Tahrirlash
-      await fetch(`/api/trx-update?userId=${userId}&trxId=${editingTrxId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-      });
-      editingTrxId = null;
+    if (navigator.onLine) {
+      if (editingTrxId) {
+        await fetch(`/api/trx-update?userId=${userId}&trxId=${editingTrxId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+        editingTrxId = null;
+      } else {
+        await fetch("/api/trx-add", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+      }
     } else {
-      // Yangi qo‘shish
-      await fetch("/api/trx-add", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
+      await saveTransactionOffline({
+        ...data,
+        trxId: crypto.randomUUID(),
+        date: new Date().toISOString(),
+        synced: false
       });
+      alert("Internet yo‘q, tranzaksiya vaqtincha saqlandi 💾");
     }
 
     trxForm.reset();
@@ -86,9 +92,13 @@ trxForm.addEventListener("submit", async e => {
   }
 });
 
-// === Tranzaksiyalarni yuklash ===
 async function loadTransactions() {
   try {
+    if (!navigator.onLine) {
+      console.warn("Offline holatda, faqat saqlanganlar ko‘rsatiladi.");
+      return;
+    }
+
     const period = filterPeriod.value;
     const res = await fetch(`/api/trx-get?userId=${userId}${period ? `&period=${period}` : ""}`);
     if (!res.ok) throw new Error("Tranzaksiya topilmadi");
@@ -99,7 +109,6 @@ async function loadTransactions() {
 
     trxList.innerHTML = "";
 
-    // === Har bir tranzaksiya uchun ro‘yxat yaratish ===
     trxs.forEach(trx => {
       const date = new Date(trx.date);
       const formattedDate = date.toLocaleString("uz-UZ", {
@@ -121,15 +130,10 @@ async function loadTransactions() {
         <div class="trx-actions">
          <button class="editBtn" data-id="${trx.trxId}">✏️</button>
           <button class="delBtn" data-id="${trx.trxId}">🗑️</button>
-
-
-
-
         </div>
       `;
       trxList.appendChild(li);
 
-      // === Edit ===
       li.querySelector(".editBtn").addEventListener("click", () => {
         trxType = trx.type;
         editingTrxId = trx.trxId;
@@ -140,20 +144,17 @@ async function loadTransactions() {
         trxForm.description.value = trx.description;
       });
 
-      // === Delete ===
       li.querySelector(".delBtn").addEventListener("click", async (e) => {
-  const trxId = e.target.getAttribute("data-id");
-  if (!trxId) return alert("Tranzaksiya ID topilmadi!");
+        const trxId = e.target.getAttribute("data-id");
+        if (!trxId) return alert("Tranzaksiya ID topilmadi!");
 
-  if (confirm("Haqiqatan ham o‘chirmoqchimisiz?")) {
-    await fetch(`/api/trx-delete?userId=${userId}&trxId=${trxId}`, { method: "DELETE" });
-    await loadTransactions();
-  }
-});
-
+        if (confirm("Haqiqatan ham o‘chirmoqchimisiz?")) {
+          await fetch(`/api/trx-delete?userId=${userId}&trxId=${trxId}`, { method: "DELETE" });
+          await loadTransactions();
+        }
+      });
     });
 
-    // === Progress barlar ===
     const totalIncome = totals?.income || 0;
     const totalExpense = totals?.expense || 0;
     const totalAmount = totalIncome + totalExpense || 1;
@@ -169,71 +170,11 @@ async function loadTransactions() {
     expenseBar.style.backgroundColor = "#f44336";
     expenseBar.querySelector(".progressLabel").innerText = `Chi­qim: ${totalExpense} so‘m`;
 
-    // === Diagrammalar ===
-    drawCharts(trxs);
-
   } catch (err) {
     console.error("loadTransactions xatosi:", err);
   }
 }
 
-// === Diagrammalarni chizish ===
-function drawCharts(trxs) {
-  const incomeData = trxs.filter(t => t.type === "income");
-  const expenseData = trxs.filter(t => t.type === "expense");
-
-  const incomeCategories = {};
-  const expenseCategories = {};
-
-  incomeData.forEach(t => {
-    incomeCategories[t.category] = (incomeCategories[t.category] || 0) + t.amount;
-  });
-  expenseData.forEach(t => {
-    expenseCategories[t.category] = (expenseCategories[t.category] || 0) + t.amount;
-  });
-
-  const colors = ['#36A2EB','#FFCE56','#4BC0C0','#FF6384','#9966FF','#8BC34A','#FF9F40','#FF5722'];
-
-  // Kirim diagrammasi
-  const ctxIncome = document.getElementById('trxChartIncome').getContext('2d');
-  if (trxChartIncome) trxChartIncome.destroy();
-  trxChartIncome = new Chart(ctxIncome, {
-    type: 'pie',
-    data: {
-      labels: Object.keys(incomeCategories).map(k => `${k}: ${incomeCategories[k]} so‘m`),
-      datasets: [{
-        data: Object.values(incomeCategories),
-        backgroundColor: colors.slice(0, Object.keys(incomeCategories).length)
-      }]
-    },
-    options: {
-      plugins: {
-        legend: { position: 'bottom' },
-        tooltip: { callbacks: { label: ctx => ctx.label } }
-      }
-    }
-  });
-
-  // Chiqim diagrammasi
-  const ctxExpense = document.getElementById('trxChartExpense').getContext('2d');
-  if (trxChartExpense) trxChartExpense.destroy();
-  trxChartExpense = new Chart(ctxExpense, {
-    type: 'pie',
-    data: {
-      labels: Object.keys(expenseCategories).map(k => `${k}: ${expenseCategories[k]} so‘m`),
-      datasets: [{
-        data: Object.values(expenseCategories),
-        backgroundColor: colors.slice(0, Object.keys(expenseCategories).length)
-      }]
-    },
-    options: {
-      plugins: {
-        legend: { position: 'bottom' },
-        tooltip: { callbacks: { label: ctx => ctx.label } }
-      }
-    }
-  });
-}
-
 filterPeriod.addEventListener("change", loadTransactions);
 loadTransactions();
+syncWithServer(userId);
